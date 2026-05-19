@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Ahaguru | AI Smart Lecture Studio • Client‑Side Flags Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f5f9ff;
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: #0b2b38;
+            padding: 2rem 1.5rem;
+        }
+
+        /* Ahaguru inspired palette: deep teal, orange accent, clean white */
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        /* header */
+        .brand {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+            border-bottom: 3px solid #ff8c42;
+            padding-bottom: 1rem;
+        }
+        .brand h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1d5e6e, #0a3b44);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+        }
+        .brand span {
+            background: #ff8c4222;
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #c45200;
+        }
+
+        /* video + transcript grid */
+        .lecture-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.8rem;
+            margin-bottom: 2.5rem;
+        }
+        .video-card, .transcript-card {
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.05);
+            overflow: hidden;
+            transition: 0.2s;
+            border: 1px solid #e9f0f5;
+        }
+        .card-head {
+            background: #fef7ec;
+            padding: 1rem 1.5rem;
+            font-weight: 700;
+            font-size: 1.2rem;
+            border-bottom: 1px solid #ffdec2;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .video-card iframe {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border: none;
+        }
+        .transcript-body {
+            padding: 1.5rem;
+            background: #fefef9;
+            max-height: 320px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #1f3b44;
+        }
+
+        /* FLAGS PANEL (feature toggles) */
+        .flags-dashboard {
+            background: #ffffffdd;
+            backdrop-filter: blur(8px);
+            border-radius: 1.8rem;
+            padding: 1.2rem 1.8rem;
+            margin-bottom: 2rem;
+            border: 1px solid #ffd9b5;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.03);
+        }
+        .flags-title {
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        .toggle-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.2rem;
+            row-gap: 0.8rem;
+            margin-top: 0.5rem;
+        }
+        .flag-item {
+            background: #f2f6fc;
+            border-radius: 60px;
+            padding: 0.4rem 1rem 0.4rem 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border: 1px solid #d4e2ee;
+        }
+        .flag-item input {
+            width: 38px;
+            height: 20px;
+            appearance: none;
+            background: #cfdfed;
+            border-radius: 30px;
+            position: relative;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .flag-item input:checked {
+            background: #ff8c42;
+        }
+        .flag-item input::before {
+            content: "";
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 1px;
+            left: 2px;
+            transition: 0.2s;
+        }
+        .flag-item input:checked::before {
+            transform: translateX(18px);
+        }
+        .perm-btn {
+            background: #1d5e6e;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 3rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .perm-btn:active { transform: scale(0.96);}
+
+        /* AI tools row */
+        .ai-tools {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.6rem;
+            margin-top: 0.5rem;
+        }
+        .tool-card {
+            background: white;
+            border-radius: 1.6rem;
+            padding: 1.2rem;
+            border: 1px solid #e9edf2;
+            box-shadow: 0 5px 12px rgba(0,0,0,0.02);
+            transition: all 0.2s;
+        }
+        .tool-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .tool-header h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        .flag-ref {
+            font-size: 0.65rem;
+            background: #f1f3f4;
+            padding: 0.2rem 0.6rem;
+            border-radius: 30px;
+            color: #2c6979;
+        }
+        textarea, select {
+            width: 100%;
+            border-radius: 1.2rem;
+            border: 1px solid #cbdde6;
+            padding: 0.6rem 1rem;
+            font-family: inherit;
+            font-size: 0.8rem;
+            margin: 0.5rem 0;
+            resize: vertical;
+        }
+        button {
+            background: #ff8c42;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.2s;
+            margin-top: 0.3rem;
+        }
+        button.secondary {
+            background: #eef2f8;
+            color: #1d5e6e;
+            border: 1px solid #caddf0;
+        }
+        .result-box {
+            background: #fafdff;
+            border-radius: 1.2rem;
+            padding: 0.8rem;
+            margin-top: 0.8rem;
+            font-size: 0.8rem;
+            border-left: 3px solid #ff8c42;
+            white-space: pre-wrap;
+        }
+        hr {
+            margin: 0.8rem 0;
+        }
+        .note {
+            font-size: 0.7rem;
+            color: #5f7f8c;
+            text-align: center;
+            margin-top: 2rem;
+        }
+        @media (max-width: 800px) {
+            .lecture-grid { grid-template-columns: 1fr; }
+            body { padding: 1rem; }
+        }
+        .badge-avail {
+            background: #c8f0e1;
+            color: #136b47;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="brand">
+        <h1>📘 Ahaguru · AI SmartClass</h1>
+        <span>⚡ Client‑Side AI Flags | On‑Device Intelligence</span>
+    </div>
+
+    <!-- Video & Transcript Section -->
+    <div class="lecture-grid">
+        <div class="video-card">
+            <div class="card-head">🎥 Lecture: Newton's Laws of Motion (Demo)</div>
+            <!-- Embed a sample educational video (physics concept) - safe embed -->
+            <iframe src="https://youtu.be/hnObhPt7VFE?si=PmtYmfv_Nb3ubdJQ" title="Newton's Laws lecture" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+        <div class="transcript-card">
+            <div class="card-head">📜 Video Transcript (AI ready)</div>
+            <div class="transcript-body" id="transcriptBody">
+                <strong>Speaker:</strong> Newton's first law states that an object at rest stays at rest, and an object in motion stays in motion with the same speed and in the same direction unless acted upon by an unbalanced force. This is the law of inertia. Second law: Force equals mass times acceleration (F = ma). Third law: For every action, there is an equal and opposite reaction. These principles form the foundation of classical mechanics. In today's lecture, we'll explore real-world applications - from rockets to car safety. Remember, understanding inertia helps us predict motion in everyday life.
+            </div>
+        </div>
+    </div>
+
+    <!-- Flags Control Panel: enable/disable features on main page -->
+    <div class="flags-dashboard">
+        <div class="flags-title">
+            <strong>🚩 EXPERIMENTAL FLAGS (Toggle on/off per feature)</strong>
+            <button id="enableAllFlags" class="perm-btn" style="background:#ff8c42;">✨ Enable all flags</button>
+        </div>
+        <div class="toggle-group" id="flagTogglesContainer">
+            <label class="flag-item">📄 Summarizer API <input type="checkbox" id="flagSummarizer" checked></label>
+            <label class="flag-item">🧠 Prompt API (Gemini Nano) <input type="checkbox" id="flagPrompt" checked></label>
+            <label class="flag-item">🌍 Language Detector <input type="checkbox" id="flagLangDetect" checked></label>
+            <label class="flag-item">🔄 Translation (via Prompt) <input type="checkbox" id="flagTranslate" checked></label>
+            <label class="flag-item">📝 Quiz Generator <input type="checkbox" id="flagQuiz" checked></label>
+            <label class="flag-item">⚙️ WebGPU Check <input type="checkbox" id="flagWebGPU" checked></label>
+        </div>
+        <div style="margin-top: 12px; font-size:0.75rem; display:flex; justify-content: space-between; flex-wrap:wrap;">
+            <span>🔧 <strong>User permission:</strong> clicking any AI button will respect flag state. Enable flags in Chrome: chrome://flags → #summarization-api-for-gemini-nano, #prompt-api-for-gemini-nano, #language-detection-api</span>
+            <button id="requestPermissionBtn" class="secondary" style="background:#e6f0fa;">🟢 Request AI Permissions (simulate)</button>
+        </div>
+    </div>
+
+    <!-- AI TOOLS SECTION : demonstrate all features -->
+    <div class="ai-tools" id="aiToolsGrid">
+        <!-- 1. Summarizer -->
+        <div class="tool-card">
+            <div class="tool-header"><h3>📄 Smart Summarizer</h3><span class="flag-ref" id="summFlagStatus">flag: ON</span></div>
+            <button id="summarizeBtn">✨ Summarize Video Transcript</button>
+            <div id="summResult" class="result-box">Click to summarize using Summarizer API (Gemini Nano required).</div>
+        </div>
+        <!-- 2. Prompt Q&A / Concept Extractor -->
+        <div class="tool-card">
+            <div class="tool-header"><h3>🧠 Key Concepts + Q&A</h3><span class="flag-ref" id="promptFlagStatus">flag: ON</span></div>
+            <button id="extractConceptsBtn">🔍 Extract Key Concepts</button>
+            <button id="askQuestionBtn" class="secondary" style="margin-left: 0.5rem;">💬 Generate 2 Quiz Qs</button>
+            <div id="promptResult" class="result-box">Extract concepts or generate quiz using Prompt API.</div>
+        </div>
+        <!-- 3. Language Detector -->
+        <div class="tool-card">
+            <div class="tool-header"><h3>🌐 Language Detection</h3><span class="flag-ref" id="langFlagStatus">flag: ON</span></div>
+            <textarea id="langSampleText" rows="2">हिंदी में न्यूटन के नियम बहुत महत्वपूर्ण हैं। Newton's laws are fundamental.</textarea>
+            <button id="detectLanguageBtn">🔎 Detect Language of Text</button>
+            <div id="langResult" class="result-box">Will detect language using built-in LanguageDetector API.</div>
+        </div>
+        <!-- 4. Translation (Using Prompt API as translator) -->
+        <div class="tool-card">
+            <div class="tool-header"><h3>🔄 Translate Transcript</h3><span class="flag-ref" id="transFlagStatus">flag: ON</span></div>
+            <select id="targetLangSelect"><option value="Hindi">Hindi (हिन्दी)</option><option value="Spanish">Spanish</option><option value="French">French</option></select>
+            <button id="translateBtn">🌎 Translate Transcript to selected language</button>
+            <div id="transResult" class="result-box">Translation will use Prompt API (Gemini Nano).</div>
+        </div>
+        <!-- 5. WebGPU diagnostic + extra flag demo -->
+        <div class="tool-card">
+            <div class="tool-header"><h3>⚙️ WebGPU & Compute</h3><span class="flag-ref" id="gpuFlagStatus">flag: ON</span></div>
+            <button id="checkWebGPUBtn">🖥️ Test WebGPU Support</button>
+            <div id="gpuResult" class="result-box">Shows if WebGPU is available for on-device AI acceleration.</div>
+        </div>
+        <!-- 6. Additional: live inference note -->
+        <div class="tool-card">
+            <div class="tool-header"><h3>🎓 EdTech Insights</h3><span class="flag-ref">active flags demo</span></div>
+            <div style="font-size:0.8rem;">⚡ All AI features respect the toggles above. <br>✅ Real Chrome Built‑in AI calls when flags enabled. <br>📘 Demo shows how Ahaguru can integrate on‑device LLM, summarizer, translation without cloud.</div>
+            <button id="showInstructionBtn" class="secondary">📖 Flag Setup Guide</button>
+            <div id="guideMsg" class="result-box" style="background:#fff3e6;"></div>
+        </div>
+    </div>
+    <div class="note">
+        🧪 <strong>Client-Side AI Flags demo</strong> — uses window.ai (Prompt, Summarizer, LanguageDetector) if Chrome flags enabled. Toggles simulate enable/disable per feature. "Request AI Permissions" checks availability and shows status.
+    </div>
+</div>
+
+<script>
+    // ---------- DOM elements & flag states ----------
+    let flagSummarizer = true, flagPrompt = true, flagLangDetect = true, flagTranslate = true, flagQuiz = true, flagWebGPU = true;
+    const transcriptText = document.getElementById('transcriptBody')?.innerText || "Newton's first law: inertia. Second law: F=ma. Third law: action-reaction. These are classical mechanics foundations.";
+
+    // Helper: update UI flag indicators
+    function updateFlagUI() {
+        document.getElementById('summFlagStatus').innerText = `flag: ${flagSummarizer ? 'ON' : 'OFF'}`;
+        document.getElementById('promptFlagStatus').innerText = `flag: ${flagPrompt ? 'ON' : 'OFF'}`;
+        document.getElementById('langFlagStatus').innerText = `flag: ${flagLangDetect ? 'ON' : 'OFF'}`;
+        document.getElementById('transFlagStatus').innerText = `flag: ${flagTranslate ? 'ON' : 'OFF'}`;
+        document.getElementById('gpuFlagStatus').innerText = `flag: ${flagWebGPU ? 'ON' : 'OFF'}`;
+        // quiz and translator share prompt flag
+    }
+
+    // sync checkboxes with global flags
+    document.getElementById('flagSummarizer').addEventListener('change', (e) => { flagSummarizer = e.target.checked; updateFlagUI(); });
+    document.getElementById('flagPrompt').addEventListener('change', (e) => { flagPrompt = e.target.checked; updateFlagUI(); });
+    document.getElementById('flagLangDetect').addEventListener('change', (e) => { flagLangDetect = e.target.checked; updateFlagUI(); });
+    document.getElementById('flagTranslate').addEventListener('change', (e) => { flagTranslate = e.target.checked; updateFlagUI(); });
+    document.getElementById('flagQuiz').addEventListener('change', (e) => { flagQuiz = e.target.checked; updateFlagUI(); });
+    document.getElementById('flagWebGPU').addEventListener('change', (e) => { flagWebGPU = e.target.checked; updateFlagUI(); });
+    document.getElementById('enableAllFlags').addEventListener('click', () => {
+        flagSummarizer = flagPrompt = flagLangDetect = flagTranslate = flagQuiz = flagWebGPU = true;
+        document.getElementById('flagSummarizer').checked = true;
+        document.getElementById('flagPrompt').checked = true;
+        document.getElementById('flagLangDetect').checked = true;
+        document.getElementById('flagTranslate').checked = true;
+        document.getElementById('flagQuiz').checked = true;
+        document.getElementById('flagWebGPU').checked = true;
+        updateFlagUI();
+        showToastMsg("All AI feature flags enabled! You can now use tools (if underlying browser APIs exist).", "#summResult");
+    });
+
+    function showToastMsg(msg, elementId) {
+        const el = document.querySelector(elementId);
+        if(el) { const prev = el.innerHTML; el.innerHTML = `💡 ${msg}<br>${prev}`; setTimeout(() => { if(el.innerHTML.includes(msg)) el.innerHTML = prev; }, 3000);}
+        else alert(msg);
+    }
+
+    // ---------- Real AI function wrappers (with flag checks) ----------
+    // Summarizer API
+    async function callSummarizer() {
+        if(!flagSummarizer) return "⚠️ Summarizer flag is OFF. Enable toggle above to use this feature.";
+        if(!window.ai || !window.ai.summarizer) return "❌ Summarizer API not available. Please enable chrome://flags/#summarization-api-for-gemini-nano and relaunch.";
+        try {
+            const availability = await window.ai.summarizer.availability();
+            if(availability !== "readily") return `⏳ Summarizer model not ready (${availability}). Download may be in progress. Ensure flags and restart.`;
+            const summarizer = await window.ai.summarizer.create();
+            const summary = await summarizer.summarize(transcriptText);
+            summarizer.destroy();
+            return `📌 Summary: ${summary}`;
+        } catch(e) { return `Summarizer error: ${e.message}`; }
+    }
+
+    // Prompt API generic helper
+    async function promptGemini(promptText) {
+        if(!flagPrompt) throw new Error("Prompt flag is OFF (disabled from UI).");
+        if(!window.ai || !window.ai.languageModel) throw new Error("Prompt API (Gemini Nano) missing. Enable #prompt-api-for-gemini-nano");
+        const availability = await window.ai.languageModel.availability();
+        if(availability !== "readily") throw new Error(`Model not ready: ${availability}. Need to enable flags, relaunch & allow download.`);
+        const session = await window.ai.languageModel.create();
+        const result = await session.prompt(promptText);
+        session.destroy();
+        return result;
+    }
+
+    async function extractConcepts() {
+        if(!flagPrompt) return "🧠 Prompt flag OFF. Turn on flag to extract concepts.";
+        try {
+            const result = await promptGemini(`Extract 3-5 key educational concepts from this transcript: "${transcriptText}". Return as bullet points.`);
+            return `🔑 Key Concepts:\n${result}`;
+        } catch(e) { return `⚠️ Gemini Nano error: ${e.message}`; }
+    }
+
+    async function generateQuiz() {
+        if(!flagQuiz) return "📝 Quiz Generator flag OFF. Enable 'Quiz Generator' toggle.";
+        if(!flagPrompt) return "Prompt API flag OFF, quiz generation disabled.";
+        try {
+            const result = await promptGemini(`Based on the transcript about Newton's Laws: "${transcriptText}", generate 2 multiple-choice questions with answers (show correct option). Format clearly.`);
+            return `🧪 Quiz Questions:\n${result}`;
+        } catch(e) { return `Quiz generation error: ${e.message}`; }
+    }
+
+    async function translateTranscript(targetLang) {
+        if(!flagTranslate) return `🌐 Translation flag OFF. Enable translation toggle first.`;
+        if(!flagPrompt) return `Prompt flag OFF, cannot translate.`;
+        try {
+            const result = await promptGemini(`Translate the following transcript into ${targetLang} language (natural tone). Only output translated text. Transcript: ${transcriptText}`);
+            return `📖 Translation (${targetLang}):\n${result}`;
+        } catch(e) { return `Translation error: ${e.message}`; }
+    }
+
+    async function detectLanguageWithAPI(text) {
+        if(!flagLangDetect) return "Language detection flag OFF. Enable toggle to use.";
+        if(!window.ai || !window.ai.languageDetector) return "❌ LanguageDetector API missing. Enable #language-detection-api flag and relaunch.";
+        try {
+            const availability = await window.ai.languageDetector.availability();
+            if(availability !== "readily") return `Language detector not ready (${availability}).`;
+            const detector = await window.ai.languageDetector.create();
+            const results = await detector.detect(text);
+            detector.destroy();
+            if(results.length === 0) return "No language detected.";
+            return results.map(r => `${r.detectedLanguage} (confidence: ${(r.confidence*100).toFixed(1)}%)`).join(', ');
+        } catch(e) { return `Detection error: ${e.message}`; }
+    }
+
+    async function webGPUCheck() {
+        if(!flagWebGPU) return "⚠️ WebGPU flag OFF. Enable toggle to test compute capability.";
+        if(!navigator.gpu) return "❌ WebGPU not supported. Enable #enable-unsafe-webgpu flag in chrome://flags";
+        try {
+            const adapter = await navigator.gpu.requestAdapter();
+            if(!adapter) return "No WebGPU adapter found.";
+            const device = await adapter.requestDevice();
+            return `✅ WebGPU available! Adapter: ${adapter.name || 'default'}. Perfect for ONNX / WebLLM acceleration.`;
+        } catch(e) { return `WebGPU error: ${e.message}`; }
+    }
+
+    // ---------- Attach button events ----------
+    document.getElementById('summarizeBtn').addEventListener('click', async () => {
+        const resultDiv = document.getElementById('summResult');
+        resultDiv.innerHTML = "⏳ Summarizing transcript... (may take a few sec)";
+        const out = await callSummarizer();
+        resultDiv.innerHTML = out;
+    });
+    document.getElementById('extractConceptsBtn').addEventListener('click', async () => {
+        const resDiv = document.getElementById('promptResult');
+        resDiv.innerHTML = "🧠 Extracting concepts...";
+        const output = await extractConcepts();
+        resDiv.innerHTML = output;
+    });
+    document.getElementById('askQuestionBtn').addEventListener('click', async () => {
+        const resDiv = document.getElementById('promptResult');
+        resDiv.innerHTML = "📝 Generating quiz questions...";
+        const output = await generateQuiz();
+        resDiv.innerHTML = output;
+    });
+    document.getElementById('detectLanguageBtn').addEventListener('click', async () => {
+        const text = document.getElementById('langSampleText').value;
+        const outDiv = document.getElementById('langResult');
+        outDiv.innerHTML = "🔍 detecting...";
+        const result = await detectLanguageWithAPI(text);
+        outDiv.innerHTML = result;
+    });
+    document.getElementById('translateBtn').addEventListener('click', async () => {
+        const target = document.getElementById('targetLangSelect').value;
+        const outDiv = document.getElementById('transResult');
+        outDiv.innerHTML = `🔄 Translating to ${target}...`;
+        const translation = await translateTranscript(target);
+        outDiv.innerHTML = translation;
+    });
+    document.getElementById('checkWebGPUBtn').addEventListener('click', async () => {
+        const outDiv = document.getElementById('gpuResult');
+        outDiv.innerHTML = "🖥️ Testing WebGPU...";
+        const gpuStatus = await webGPUCheck();
+        outDiv.innerHTML = gpuStatus;
+    });
+    document.getElementById('showInstructionBtn').addEventListener('click', () => {
+        const guideDiv = document.getElementById('guideMsg');
+        guideDiv.innerHTML = `<strong>🔧 Required Chrome Flags (restart browser):</strong><br>
+        • chrome://flags → #optimization-guide-on-device → Enabled<br>
+        • #prompt-api-for-gemini-nano → Enabled<br>
+        • #summarization-api-for-gemini-nano → Enabled<br>
+        • #language-detection-api → Enabled<br>
+        • #enable-experimental-web-platform-features (optional for WebGPU)<br>
+        ✅ After relaunch, all AI tools will use <strong>real on-device AI</strong> (Gemini Nano).<br>
+        🧪 Toggles above simulate enable/disable per feature for demonstration.`;
+    });
+    document.getElementById('requestPermissionBtn').addEventListener('click', async () => {
+        let msg = "🔔 AI Permissions Check:\n";
+        try { if(window.ai?.languageModel) { const avail = await window.ai.languageModel.availability(); msg += `Prompt API: ${avail}\n`; } else { msg += "Prompt API: missing (flags?)\n"; } } catch(e){msg+=`Prompt API err\n`;}
+        try { if(window.ai?.summarizer) { const s = await window.ai.summarizer.availability(); msg += `Summarizer: ${s}\n`; } else { msg += "Summarizer: missing\n"; } } catch(e){}
+        try { if(window.ai?.languageDetector) { const ld = await window.ai.languageDetector.availability(); msg += `LanguageDetector: ${ld}\n`; } else { msg += "LanguageDetector: missing\n"; } } catch(e){}
+        msg += "\n💡 Toggle flags above to enable/disable UI features. Real APIs need Chrome flags.";
+        alert(msg);
+    });
+
+    // Initialize UI
+    updateFlagUI();
+    // extra: show webGPU status on load optionally
+    (async () => {
+        if(navigator.gpu && flagWebGPU) {
+            const adapter = await navigator.gpu?.requestAdapter();
+            if(adapter) document.getElementById('gpuResult').innerHTML = `🟢 WebGPU ready (adapter found). Click test for details.`;
+        }
+    })();
+</script>
+</body>
+</html>
